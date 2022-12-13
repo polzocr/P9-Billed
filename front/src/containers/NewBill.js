@@ -13,6 +13,7 @@ export default class NewBill {
     this.fileUrl = null
     this.fileName = null
     this.billId = null
+    this.goodType = false
     new Logout({ document, localStorage, onNavigate })
   }
   handleChangeFile = e => {
@@ -20,6 +21,10 @@ export default class NewBill {
     const file = this.document.querySelector(`input[data-testid="file"]`).files[0]
     const filePath = e.target.value.split(/\\/g)
     const fileName = filePath[filePath.length-1]
+    const ext = fileName.split('.')[1]
+    if(ext == "jpg" || ext == 'jpeg' || ext == 'png'){
+      this.goodType = true
+    }
     const formData = new FormData()
     const email = JSON.parse(localStorage.getItem("user")).email
     formData.append('file', file)
@@ -57,8 +62,12 @@ export default class NewBill {
       fileName: this.fileName,
       status: 'pending'
     }
-    this.updateBill(bill)
-    this.onNavigate(ROUTES_PATH['Bills'])
+    if(this.goodType == true) {
+      this.updateBill(bill)
+      this.onNavigate(ROUTES_PATH['Bills'])
+    } else {
+      alert("Le type de fichier saisi n'est pas correct")
+    }
   }
 
   // not need to cover this function by tests
