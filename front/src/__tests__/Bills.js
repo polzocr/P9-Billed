@@ -3,12 +3,14 @@
  */
 
 import '@testing-library/jest-dom'
-import {getByTestId, screen, waitFor} from "@testing-library/dom"
+import {fireEvent, getByAltText, getByTestId, screen, waitFor} from "@testing-library/dom"
 import BillsUI from "../views/BillsUI.js"
 import { bills } from "../fixtures/bills.js"
+import Bills from '../containers/Bills'
 import { ROUTES_PATH} from "../constants/routes.js";
 import {localStorageMock} from "../__mocks__/localStorage.js";
 import mockStore from "../__mocks__/store"
+import userEvent from '@testing-library/user-event'
 
 import router from "../app/Router.js";
 
@@ -26,9 +28,9 @@ describe("Given I am connected as an employee", () => {
       document.body.append(root)
       router()
       window.onNavigate(ROUTES_PATH.Bills)
-      await waitFor(() => screen.getByTestId('icon-window'))
-      const windowIcon = screen.getByTestId('icon-window')
-      //to-do write expect expression
+      //icone du vertical layout bien présent
+      const windowIcon = await screen.getByTestId('icon-window')
+      expect(windowIcon).toHaveClass('active-icon')
 
     })
     test("Then bills should be ordered from earliest to latest", () => {
@@ -39,8 +41,60 @@ describe("Given I am connected as an employee", () => {
       expect(dates).toEqual(datesSorted)
     })
   })
+    test('Then button new bills should render new bill page', async () => {
+      const root = document.createElement("div")
+      root.setAttribute("id", "root")
+      document.body.append(root)
+      router()
+      window.onNavigate(ROUTES_PATH.Bills)
+      const buttonNewBill = await screen.getByText('Nouvelle note de frais')
+      fireEvent.click(buttonNewBill)
+      const newBill = await screen.getByText('Envoyer une note de frais')
+      expect(newBill).toBeTruthy()
+    })
+
+    test('Then eye-icon button should shows image modal', async () => {
+      
+      const root = document.createElement("div")
+      root.setAttribute("id", "root")
+      document.body.append(root)
+      router()
+      window.onNavigate(ROUTES_PATH.Bills)
+      await waitFor(() => screen.getByText("Mes notes de frais"))
+
+      // on regarde simplement si la modale s'affiche en regarde l'alt de l'image
+      const eyeButton = screen.getAllByTestId('icon-eye')
+      //$.fn.modal = jest.fn()
+      fireEvent.click(eyeButton[1])
+      const modal = screen.getByAltText('Bill')
+      expect(modal).toBeVisible()
+      
+
+      //on créé une instance de Bills et on lui ajoute l'évenement avec mock
+      /*
+      const store = null;
+      //$.fn.modal = jest.fn()
+      const newBills = new Bills({
+        document,
+        onNavigate,
+        store,
+        localStorage: window.localStorage
+      });
+      const eyeButton = screen.getAllByTestId('icon-eye')[0]
+      const handleClick = jest.fn(newBills.handleClickIconEye(eyeButton));
+      // login.login = jest.fn().mockResolvedValue({});
+      eyeButton.addEventListener("click", handleClick);
+      fireEvent.click(eyeButton);
+      expect(handleClick).toHaveBeenCalled();
+      expect(screen.getByAltText('Bill')).toBeVisible();
+      */
+    })
 })
 
+
+
+
+//test d'intégration GET avec erreurs 404 et 500
 
 describe("Given I am a user connected as Employee", () => {
   describe("When I navigate to Bills Page", () => {
@@ -106,7 +160,6 @@ describe("Given I am a user connected as Employee", () => {
     })
 
     test("fetches messages from an API and fails with 500 message error", async () => {
-      console.log(mockStore)
       mockStore.bills.mockImplementationOnce(() => {
         return {
           list : () =>  {
