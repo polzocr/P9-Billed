@@ -82,7 +82,6 @@ describe("Given I am connected as an employee", () => {
       });
       const eyeButton = screen.getAllByTestId('icon-eye')[0]
       const handleClick = jest.fn(newBills.handleClickIconEye(eyeButton));
-      // login.login = jest.fn().mockResolvedValue({});
       eyeButton.addEventListener("click", handleClick);
       fireEvent.click(eyeButton);
       expect(handleClick).toHaveBeenCalled();

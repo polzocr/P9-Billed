@@ -22,8 +22,11 @@ export default class NewBill {
     const filePath = e.target.value.split(/\\/g)
     const fileName = filePath[filePath.length-1]
     const ext = fileName.split('.')[1]
-    if(ext == "jpg" || ext == 'jpeg' || ext == 'png'){
-      this.goodType = true
+    const fileFormat = ['jpg', 'jpeg', "png"]
+    if(!fileFormat.includes(ext)){
+      this.document.querySelector(`input[data-testid="file"]`).value = ''
+      alert("Le type de fichier saisi n'est pas correct")
+      return
     }
     const formData = new FormData()
     const email = JSON.parse(localStorage.getItem("user")).email
@@ -62,12 +65,8 @@ export default class NewBill {
       fileName: this.fileName,
       status: 'pending'
     }
-    if(this.goodType == true) {
-      this.updateBill(bill)
-      this.onNavigate(ROUTES_PATH['Bills'])
-    } else {
-      alert("Le type de fichier saisi n'est pas correct")
-    }
+    this.updateBill(bill)
+    this.onNavigate(ROUTES_PATH['Bills'])
   }
 
   // not need to cover this function by tests
