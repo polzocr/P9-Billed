@@ -62,10 +62,13 @@ describe("Given I am a user connected as employee", () => {
     
     
       const handleChangeFile = jest.fn(newBill.handleChangeFile);
-      const newFile = new File(['image.jpg'], 'C:\\fakepath\\harass.jpg' , { type: "image.jpeg}"})
+      const newFile = new File(['image.jpg'], 'C:\\fakepath\\une-image.jpg' , { type: "image.jpeg}"})
       file.addEventListener("change", handleChangeFile);
       //fireEvent.change(file,newFile)
       userEvent.upload(file ,newFile)
+      expect(screen.getByTestId('file').files[0].name).toBe('C:\\fakepath\\une-image.jpg')
+
+      
       
 
     // newBill.fileUrl = 'https://test.storage.tld/v0/b/billable-677b6.a…dur.jpg?alt=media&token=571d34cb-9c8f-430a-af52-66221cae1da3'
@@ -73,23 +76,12 @@ describe("Given I am a user connected as employee", () => {
       const handleSubmit = jest.fn(newBill.handleSubmit);
       formSubmit.addEventListener("submit", handleSubmit);
       fireEvent.submit(formSubmit)
+      await waitFor(() => screen.getByText("Mes notes de frais"))
+      expect(screen.getByTestId('btn-new-bill')).toHaveTextContent('Nouvelle note de frais')
 
       expect(mockSpy).toHaveBeenCalled()
       //expect(handleSubmit).toBeCalled()
       //expect(createBill).toHaveBeenCalled()
-    
-    
-    // const handleSubmit = jest.spyOn(newBill, 'handleSubmit')
-    // const updateBill = jest.spyOn(newBill, 'updateBill')
-    // const changeMockStore = jest.spyOn(mockStore, "bills");
-    // formSubmit.addEventListener('submit', handleSubmit)
-    // fireEvent.submit(formSubmit)
-    
-    // expect(handleSubmit).toHaveBeenCalled()
-    // expect(updateBill).toHaveBeenCalled()
-    // expect(changeMockStore).toHaveBeenCalled();
-    //await waitFor(() => screen.getByText("Mes notes de frais"))
-
     
     })
   
