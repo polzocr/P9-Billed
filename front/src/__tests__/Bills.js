@@ -53,7 +53,7 @@ describe("Given I am connected as an employee", () => {
       expect(newBill).toBeTruthy()
     })
 
-    test('Then eye-icon button should shows image modal', async () => {
+    test('Then eye-icon button should shows right image modal', async () => {
       
       const root = document.createElement("div")
       root.setAttribute("id", "root")
@@ -66,8 +66,13 @@ describe("Given I am connected as an employee", () => {
       const eyeButton = screen.getAllByTestId('icon-eye')
       //$.fn.modal = jest.fn()
       fireEvent.click(eyeButton[1])
+      const url = eyeButton[1].dataset.billUrl
       const modal = screen.getByAltText('Bill')
+      const modalSrc = modal.src.replace('%E2%80%A6','…')
+      //la modale s'affiche ?
       expect(modal).toBeVisible()
+      //est-ce la bonne image ?
+      expect(modalSrc).toBe(url)
       
 
       //on créé une instance de Bills et on lui ajoute l'évenement avec mock
