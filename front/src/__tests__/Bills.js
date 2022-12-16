@@ -62,11 +62,11 @@ describe("Given I am connected as an employee", () => {
       window.onNavigate(ROUTES_PATH.Bills)
       await waitFor(() => screen.getByText("Mes notes de frais"))
 
-      // on regarde simplement si la modale s'affiche en regarde l'alt de l'image
+      // on regarde simplement si la modale s'affiche en regardant l'alt de l'image
       const modalFile = document.getElementById('modaleFile')
       $.fn.modal = jest.fn(() => modalFile.classList.add('show'))
       const eyeButton = screen.getAllByTestId('icon-eye')
-      
+
       fireEvent.click(eyeButton[1])
       const url = eyeButton[1].dataset.billUrl
       const modal = screen.getByAltText('Bill')
