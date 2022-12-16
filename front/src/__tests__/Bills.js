@@ -63,35 +63,44 @@ describe("Given I am connected as an employee", () => {
       await waitFor(() => screen.getByText("Mes notes de frais"))
 
       // on regarde simplement si la modale s'affiche en regarde l'alt de l'image
+      const modalFile = document.getElementById('modaleFile')
+      $.fn.modal = jest.fn(() => modalFile.classList.add('show'))
       const eyeButton = screen.getAllByTestId('icon-eye')
-      //$.fn.modal = jest.fn()
+      
       fireEvent.click(eyeButton[1])
       const url = eyeButton[1].dataset.billUrl
       const modal = screen.getByAltText('Bill')
       const modalSrc = modal.src.replace('%E2%80%A6','…')
       //la modale s'affiche ?
       expect(modal).toBeVisible()
+      expect(modalFile).toHaveClass('show')
       //est-ce la bonne image ?
       expect(modalSrc).toBe(url)
       
 
       //on créé une instance de Bills et on lui ajoute l'évenement avec mock
-      /*
-      const store = null;
-      //$.fn.modal = jest.fn()
-      const newBills = new Bills({
-        document,
-        onNavigate,
-        store,
-        localStorage: window.localStorage
-      });
-      const eyeButton = screen.getAllByTestId('icon-eye')[0]
-      const handleClick = jest.fn(newBills.handleClickIconEye(eyeButton));
-      eyeButton.addEventListener("click", handleClick);
-      fireEvent.click(eyeButton);
-      expect(handleClick).toHaveBeenCalled();
-      expect(screen.getByAltText('Bill')).toBeVisible();
-      */
+      // const modalFile = document.getElementById('modaleFile')
+      // const store = null;
+      // $.fn.modal = jest.fn(() => modalFile.classList.add('show'))
+      // const newBills = new Bills({
+      //   document,
+      //   onNavigate,
+      //   store,
+      //   localStorage: window.localStorage
+      // });
+      // const eyeButton = screen.getAllByTestId('icon-eye')[0]
+      
+      // const handleClick = jest.fn(newBills.handleClickIconEye(eyeButton));
+      // eyeButton.addEventListener("click", handleClick);
+      // fireEvent.click(eyeButton);
+      
+      // const url = eyeButton.dataset.billUrl;
+      // const modalSrc = screen.getByAltText('Bill').src.replace('%E2%80%A6','…');
+
+      // expect(handleClick).toHaveBeenCalled();
+      // expect(modaleFile).toHaveClass("show")
+      // expect(modalSrc).toBe(url)
+      
     })
 })
 
