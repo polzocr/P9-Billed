@@ -24,8 +24,11 @@ export default class NewBill {
     const ext = fileName.split('.')[1]
     const fileFormat = ['jpg', 'jpeg', "png"]
     if(!fileFormat.includes(ext)){
-      this.document.querySelector(`input[data-testid="file"]`).value = '';
       console.log('ERREUR')
+      this.document.querySelector(`input[data-testid="file"]`).value = '';
+      this.document.querySelector(`input[data-testid="file"]`).files = null;
+      // const dt = new DataTransfer();
+      // this.document.querySelector(`input[data-testid="file"]`).files = dt.files
       alert("Le type de fichier saisi n'est pas correct")
       return
     }
@@ -55,6 +58,7 @@ export default class NewBill {
       })
       .then(({fileUrl, key}) => {
         console.log(fileUrl)
+        console.log(key)
         this.billId = key
         this.fileUrl = fileUrl
         this.fileName = fileName
