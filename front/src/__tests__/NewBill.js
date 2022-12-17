@@ -55,6 +55,7 @@ describe("Given I am a user connected as employee", () => {
         
         expect(handleSubmit).toHaveBeenCalled()
       })
+      //test validité des champs
       test('then inputs should be valid', async () => {
         window.onNavigate(ROUTES_PATH.NewBill)
         jest.clearAllMocks()
@@ -80,6 +81,7 @@ describe("Given I am a user connected as employee", () => {
         expect(amount.validity.valid).toBeTruthy()
         expect(pct.validity.valid).toBeTruthy()
       })
+      //test validité des champs avec des champs vides et des champs incorrects
       test('then inputs should not be valid', async () => {
         window.onNavigate(ROUTES_PATH.NewBill)
         jest.clearAllMocks()
@@ -145,22 +147,129 @@ describe("Given I am a user connected as employee", () => {
         const file = screen.getByTestId('file')
         const newFile = new File(['image.jpg'], 'une-image.jpg' , { type: "image/jpeg"})
 
-        const spyStore = jest.spyOn(mockStore.bills(), 'create')
+        const spyCreate = jest.spyOn(mockStore.bills(), 'create')
         const alerting = jest.spyOn(window, "alert").mockImplementation(() => {});
         const handleChangeFile = jest.fn(() => billNew.handleChangeFile);
 
         document.querySelector('input[type=file]').addEventListener('change', handleChangeFile )
         userEvent.upload(file , newFile)
         
-        expect(spyStore).toHaveBeenCalled()
+        expect(spyCreate).toHaveBeenCalled()
         //expect(handleChangeFile).toHaveBeenCalled()
         expect(alerting).not.toHaveBeenCalled()
         expect(file.files).not.toBeNull()
         expect(file.files[0]).toStrictEqual(newFile)
       })
-      //vérification des autres champs nécessaire
       
     })
+
+    describe('when i submit form with good value', () => {
+      test('then it should call the update method', async () => {
+        jest.clearAllMocks()
+        window.onNavigate(ROUTES_PATH.NewBill)
+        const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
+        const file = screen.getByTestId('file')
+        const newFile = new File(['image.jpg'], 'une-image.jpg' , { type: "image/jpeg"})
+
+        const spyUpdate = jest.spyOn(mockStore.bills(), 'update')
+        const spyCreate = jest.spyOn(mockStore.bills(), 'create')
+
+        //on ajout un bon fichier et on regarde si la fonction est bien appellée
+        const handleChangeFile = jest.fn(() => billNew.handleChangeFile);
+        document.querySelector('input[type=file]').addEventListener('change', handleChangeFile )
+        userEvent.upload(file , newFile)
+        expect(spyCreate).toHaveBeenCalled()
+
+        //on submit le formulaire
+        const handleSubmit = jest.fn(() => billNew.handleSubmit)
+        const submitButton = document.querySelector('#btn-send-bill')
+        submitButton.addEventListener('click', handleSubmit)
+        userEvent.click(submitButton)
+
+        expect(spyUpdate).toHaveBeenCalled()
+        // expect(spyUpdate.mock.calls[0]).toEqual('yeah')
+      })
+      test('it should render Bills page', async () => {
+        await waitFor(() => screen.getByText("Mes notes de frais"))
+        expect(screen.getByText("Mes notes de frais")).toBeTruthy()
+      })
+    })
+    describe('when i call create function', () => {
+      test('it should return correct value', async () => {
+        mockStore.bills().create().then(value => {
+          expect(value.fileUrl).toBe('https://localhost:3456/images/test.jpg')
+          expect(value.key).toBe('1234')
+        })
+      })
+    })
+    describe('when i call update function', () => {
+      test('it should return correct value', async () => {
+        const expectedData = {
+          "id": "47qAXb6fIm2zOKkLzMro",
+          "vat": "80",
+          "fileUrl": "https://firebasestorage.googleapis.com/v0/b/billable-677b6.a…f-1.jpg?alt=media&token=c1640e12-a24b-4b11-ae52-529112e9602a",
+          "status": "pending",
+          "type": "Hôtel et logement",
+          "commentary": "séminaire billed",
+          "name": "encore",
+          "fileName": "preview-facture-free-201801-pdf-1.jpg",
+          "date": "2004-04-04",
+          "amount": 400,
+          "commentAdmin": "ok",
+          "email": "a@a",
+          "pct": 20
+        }
+        mockStore.bills().update().then(value => {
+          expect(value.id).toBe(expectedData.id)
+          expect(value.name).toBe(expectedData.name)
+        })
+      })
+    })
+
+    describe("When an error occurs on API", () => {
+      beforeEach(() => {
+        jest.spyOn(mockStore, "bills")
+        Object.defineProperty(
+            window,
+            'localStorage',
+            { value: localStorageMock }
+        )
+        window.localStorage.setItem('user', JSON.stringify({
+          type: 'Employee'
+        }))
+        const root = document.createElement("div")
+        root.setAttribute("id", "root")
+        document.body.appendChild(root)
+        router()
+        window.onNavigate(ROUTES_PATH.NewBill)
+      })
+      test("fetches bills from an API and fails with 404 message error", async () => {
+
+        mockStore.bills.mockImplementationOnce(() => {
+          return {
+            create : () =>  {
+              return Promise.reject(new Error("Erreur 404"))
+            }
+          }})
+        document.body.innerHTML = (ROUTES({ pathname: ROUTES_PATH['Bills'], error: "Erreur 404"}))
+        await new Promise(process.nextTick);
+        const message = await screen.getByText(/Erreur 404/)
+        expect(message).toBeTruthy()
+      })
+      test("fetches bills from an API and fails with 500 message error", async () => {
+
+        mockStore.bills.mockImplementationOnce(() => {
+          return {
+            create : () =>  {
+              return Promise.reject(new Error("Erreur 500"))
+            }
+          }})
+        document.body.innerHTML = (ROUTES({ pathname: ROUTES_PATH['Bills'], error: "Erreur 500"}))
+        await new Promise(process.nextTick);
+        const message = await screen.getByText(/Erreur 500/)
+        expect(message).toBeTruthy()
+      })
+  })
     
     
   })
