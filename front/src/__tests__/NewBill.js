@@ -14,6 +14,7 @@ import { bills } from "../fixtures/bills.js"
 import Bills from '../containers/Bills'
 import userEvent from '@testing-library/user-event'
 import { TestScheduler } from 'jest'
+import test from 'node:test'
 
 
 jest.mock("../app/store", () => mockStore)
@@ -192,6 +193,13 @@ describe("Given I am a user connected as employee", () => {
       test('it should render Bills page', async () => {
         await waitFor(() => screen.getByText("Mes notes de frais"))
         expect(screen.getByText("Mes notes de frais")).toBeTruthy()
+      })
+      test.only('test ahah', async () => {
+        jest.clearAllMocks()
+        window.onNavigate(ROUTES_PATH.NewBill)
+        const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
+        expect(1).toBe(2)
+
       })
     })
     describe('when i call create function', () => {
