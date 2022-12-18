@@ -24,7 +24,7 @@ export default class NewBill {
     const ext = fileName.split('.')[1]
     const fileFormat = ['jpg', 'jpeg', "png"]
     if(!fileFormat.includes(ext)){
-      console.log('ERREUR')
+      console.log('ERREUR, fichier incorrect')
       this.document.querySelector(`input[data-testid="file"]`).value = '';
       this.document.querySelector(`input[data-testid="file"]`).files = null;
       // const dt = new DataTransfer();
