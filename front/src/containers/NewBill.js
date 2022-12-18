@@ -104,6 +104,7 @@ export default class NewBill {
           .bills()
           .update({data: JSON.stringify(bill), selector: this.billId})
           .then(() => {
+            console.log('update effectué: ', bill)
             this.onNavigate(ROUTES_PATH['Bills'])
           })
           .catch(error => console.error(error))

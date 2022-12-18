@@ -18,9 +18,11 @@ import { TestScheduler } from 'jest'
 
 jest.mock("../app/store", () => mockStore)
 
+
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 window.localStorage.setItem('user', JSON.stringify({
-  type: 'Employee'
+  type: 'Employee',
+  email: 'employee@test.tld'
 }))
 const root = document.createElement("div")
 root.setAttribute("id", "root")
@@ -192,6 +194,53 @@ describe("Given I am a user connected as employee", () => {
       test('it should render Bills page', async () => {
         await waitFor(() => screen.getByText("Mes notes de frais"))
         expect(screen.getByText("Mes notes de frais")).toBeTruthy()
+      })
+      test.only('ca remarche ?', async () => {
+        jest.clearAllMocks()
+        window.onNavigate(ROUTES_PATH.NewBill)
+        const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
+        const date = screen.getByTestId('datepicker')
+        const amount = screen.getByTestId('amount')
+        const pct = screen.getByTestId('pct')
+        const file = screen.getByTestId('file')
+        const newFile = new File(['image.jpg'], 'une-image.jpg' , { type: "image/jpeg"})
+        const name = screen.getByTestId('expense-name')
+        const vat = screen.getByTestId('vat')
+        const commentary = screen.getByTestId('commentary')
+        
+        const formSubmit = screen.getByTestId('form-new-bill')
+        const submitButton = document.querySelector('#btn-send-bill')
+       
+        console.log = jest.fn()
+        const handleSubmit = jest.fn(() => billNew.handleSubmit)
+        const spyUpdate = jest.spyOn(mockStore.bills(), 'update')
+        const spyCreate = jest.spyOn(mockStore.bills(), 'create')
+        //const handleChangeFile = jest.fn(() => billNew.handleChangeFile)
+
+        
+        fireEvent.change(commentary, {target: {value:'Voila un long et important commentaire'}})
+        fireEvent.change(name, {target: {value:'Tres grosse dépense'}})
+        fireEvent.change(vat, {target: {value:'200'}})
+        fireEvent.change(date, {target: {value:'2021-01-01'}})
+        fireEvent.change(amount, {target: {value:'220'}})
+        fireEvent.change(pct, {target: {value:'10'}})
+
+        //file.addEventListener('change', handleChangeFile)
+        userEvent.upload(file , newFile)
+        await new Promise(process.nextTick);
+
+        submitButton.addEventListener('click', handleSubmit)
+        userEvent.click(submitButton)
+        await new Promise(process.nextTick);
+
+        
+
+        expect(handleSubmit).toHaveBeenCalled()
+        expect(spyCreate).toHaveBeenCalled()
+        expect(spyUpdate).toHaveBeenCalled()
+        expect(console.log.mock.calls[0][0]).toEqual('https://localhost:3456/images/test.jpg')
+        expect(console.log.mock.calls[1][0]).toEqual('1234')
+        expect(console.log.mock.calls[2][0]).toEqual("update effectué: ", {"amount": 220, "commentary": "Voila un long et important commentaire", "date": "2021-01-01", "email": "employee@test.tld", "fileName": "une-image.jpg", "fileUrl": "https://localhost:3456/images/test.jpg", "name": "Tres grosse dépense", "pct": 10, "status": "pending", "type": "Transports", "vat": "200"})
       })
     })
     describe('when i call create function', () => {
