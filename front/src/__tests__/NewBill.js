@@ -155,8 +155,8 @@ describe("Given I am a user connected as employee", () => {
         userEvent.upload(file , newFile)
         
         expect(spyCreate).toHaveBeenCalled()
+
         //expect(handleChangeFile).toHaveBeenCalled()
-        expect(alerting).not.toHaveBeenCalled()
         expect(file.files).not.toBeNull()
         expect(file.files[0]).toStrictEqual(newFile)
       })
