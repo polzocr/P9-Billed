@@ -14,7 +14,7 @@ import { bills } from "../fixtures/bills.js"
 import Bills from '../containers/Bills'
 import userEvent from '@testing-library/user-event'
 import { TestScheduler } from 'jest'
-import test from 'node:test'
+import BillsUI from '../views/BillsUI.js'
 
 
 jest.mock("../app/store", () => mockStore)
@@ -40,27 +40,13 @@ describe("Given I am a user connected as employee", () => {
     test('Then new Bill page should be displayed', async () => {
       await waitFor(() => screen.getByText("Envoyer une note de frais"))
       expect(screen.getByText("Envoyer une note de frais")).toBeTruthy()
-      expect(screen.getByTestId("file")).toBeTruthy()
-      
+      expect(screen.getByTestId("file")).toBeTruthy()      
     })
 
-    describe('when i try to submit the form', () => {
-      //evenement submit possible ?
-      test('Then submit event should be called', async () => {
-        window.onNavigate(ROUTES_PATH.NewBill)
-        const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
-
-        const handleSubmit = jest.fn(() => billNew.handleSubmit)
-        const submitButton = document.querySelector('#btn-send-bill')
-        
-        submitButton.addEventListener('click', handleSubmit)
-        userEvent.click(submitButton)
-        
-        expect(handleSubmit).toHaveBeenCalled()
-      })
+    describe('when i try to submit the form', () => {     
       //test validité des champs
       test('then inputs should be valid', async () => {
-        window.onNavigate(ROUTES_PATH.NewBill)
+        
         jest.clearAllMocks()
 
         const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
@@ -86,7 +72,7 @@ describe("Given I am a user connected as employee", () => {
       })
       //test validité des champs avec des champs vides et des champs incorrects
       test('then inputs should not be valid', async () => {
-        window.onNavigate(ROUTES_PATH.NewBill)
+        document.body.innerHTML = NewBillUI()
         jest.clearAllMocks()
 
         const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
@@ -130,52 +116,58 @@ describe("Given I am a user connected as employee", () => {
     describe('when i try to change the file', () => {
       //peut-on rentrer un fichier avec un format incorrect ?
       test('Then input a file with incorrect format should remove the file', async () => {
-        window.onNavigate(ROUTES_PATH.NewBill)
+        document.body.innerHTML = NewBillUI()
         const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
-        const file = screen.getByTestId('file')
+        const fileInput = screen.getByTestId('file')
         const newFile = new File(['image.pdf'], 'une-image.pdf' , { type: "image/pdf"})
 
-        console.log = jest.fn()
+        
         const alerting = jest.spyOn(window, "alert").mockImplementation(() => {});
         const spyCreate = jest.spyOn(mockStore.bills(), 'create')
-        const handleChangeFile = jest.fn(() => billNew.handleChangeFile);
+        
 
-        document.querySelector('input[type=file]').addEventListener('change', handleChangeFile )
-        userEvent.upload(file , newFile)
+        fileInput.addEventListener('change', billNew.handleChangeFile )
+        userEvent.upload(fileInput , newFile)
         await new Promise(process.nextTick);
 
-        //expect(handleChangeFile).toHaveBeenCalled()
+        
         expect(alerting).toBeCalledWith("Le type de fichier saisi n'est pas correct")
-        expect(console.log.mock.calls[0][0]).toEqual('ERREUR, fichier incorrect')
-        expect(file.files).toBeNull()
+        expect(billNew.goodFileType).toEqual(false)
+        expect(billNew.fileUrl).toBeNull()
+        expect(billNew.billId).toBeNull()
+        expect(fileInput.files).toBeNull()
         expect(spyCreate).not.toHaveBeenCalled()
       })
       //input with a valid file
       test('Then input a file with correct format should keep the file and then call create method', async () => {
         jest.clearAllMocks()
-        window.onNavigate(ROUTES_PATH.NewBill)
+        document.body.innerHTML = NewBillUI()
+
         const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
-        const file = screen.getByTestId('file')
+        const fileInput = screen.getByTestId('file')
         const newFile = new File(['image.jpg'], 'une-image.jpg' , { type: "image/jpeg"})
 
-        console.log = jest.fn()
         const spyCreate = jest.spyOn(mockStore.bills(), 'create')
         const spyUpdate = jest.spyOn(mockStore.bills(), 'update')
         const alerting = jest.spyOn(window, "alert").mockImplementation(() => {});
-        const handleChangeFile = jest.fn(() => billNew.handleChangeFile);
+        
 
-        document.querySelector('input[type=file]').addEventListener('change', handleChangeFile )
-        userEvent.upload(file , newFile)
+        fileInput.addEventListener('change', billNew.handleChangeFile )
+        userEvent.upload(fileInput , newFile)
         await new Promise(process.nextTick);
+
         
         expect(alerting).not.toBeCalledWith("Le type de fichier saisi n'est pas correct")
         expect(spyCreate).toHaveBeenCalled()
         expect(spyUpdate).not.toHaveBeenCalled()
-        expect(console.log.mock.calls[0][0]).toEqual('https://localhost:3456/images/test.jpg')
-        expect(console.log.mock.calls[1][0]).toEqual('1234')
-        //expect(handleChangeFile).toHaveBeenCalled()
-        expect(file.files).not.toBeNull()
-        expect(file.files[0]).toStrictEqual(newFile)
+
+        expect(billNew.fileUrl).toEqual('https://localhost:3456/images/test.jpg')
+        expect(billNew.billId).toEqual('1234')
+        expect(billNew.fileName).toEqual('une-image.jpg')
+
+        expect(billNew.goodFileType).toBeTruthy()
+        expect(fileInput.files).not.toBeNull()
+        expect(fileInput.files[0]).toStrictEqual(newFile)
       })
       
     })
@@ -183,7 +175,11 @@ describe("Given I am a user connected as employee", () => {
     describe('when i submit form with good value', () => {
       test('then it should call the update method', async () => {
         jest.clearAllMocks()
-        window.onNavigate(ROUTES_PATH.NewBill)
+        document.body.innerHTML = NewBillUI()
+
+        const onNavigate = (pathname) => {
+          document.body.innerHTML = ROUTES({ pathname })
+        }
         const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
         const date = screen.getByTestId('datepicker')
         const amount = screen.getByTestId('amount')
@@ -197,12 +193,8 @@ describe("Given I am a user connected as employee", () => {
         const formSubmit = screen.getByTestId('form-new-bill')
         const submitButton = document.querySelector('#btn-send-bill')
        
-        console.log = jest.fn()
-        // const logSpy = jest.spyOn(console, 'log');
-        const handleSubmit = jest.fn(() => billNew.handleSubmit)
         const spyUpdate = jest.spyOn(mockStore.bills(), 'update')
         const spyCreate = jest.spyOn(mockStore.bills(), 'create')
-        //const handleChangeFile = jest.fn(() => billNew.handleChangeFile)
 
         
         fireEvent.change(commentary, {target: {value:'Voila un long et important commentaire'}})
@@ -212,64 +204,26 @@ describe("Given I am a user connected as employee", () => {
         fireEvent.change(amount, {target: {value:'220'}})
         fireEvent.change(pct, {target: {value:'10'}})
 
-        //file.addEventListener('change', handleChangeFile)
+        file.addEventListener('change', billNew.handleChangeFile)
         userEvent.upload(file , newFile)
         await new Promise(process.nextTick);
 
-        submitButton.addEventListener('click', handleSubmit)
+        submitButton.addEventListener('click', billNew.handleSubmit)
         userEvent.click(submitButton)
         await new Promise(process.nextTick);
 
         
         
-        expect(handleSubmit).toHaveBeenCalled()
         expect(spyCreate).toHaveBeenCalled()
+        expect(billNew.fileUrl).toEqual('https://localhost:3456/images/test.jpg')
+        expect(billNew.billId).toEqual('1234')
+        
         expect(spyUpdate).toHaveBeenCalled()
-        expect(console.log.mock.calls[0][0]).toEqual('https://localhost:3456/images/test.jpg')
-        expect(console.log.mock.calls[1][0]).toEqual('1234')
-        expect(console.log.mock.calls[2][0]).toEqual("update effectué: ", {"amount": 220, "commentary": "Voila un long et important commentaire", "date": "2021-01-01", "email": "employee@test.tld", "fileName": "une-image.jpg", "fileUrl": "https://localhost:3456/images/test.jpg", "name": "Tres grosse dépense", "pct": 10, "status": "pending", "type": "Transports", "vat": "200"})
+        expect(spyUpdate).toBeCalledWith({"data": "{\"email\":\"employee@test.tld\",\"type\":\"Transports\",\"name\":\"Tres grosse dépense\",\"amount\":220,\"date\":\"2021-01-01\",\"vat\":\"200\",\"pct\":10,\"commentary\":\"Voila un long et important commentaire\",\"fileUrl\":\"https://localhost:3456/images/test.jpg\",\"fileName\":\"une-image.jpg\",\"status\":\"pending\"}", "selector": "1234"})
       })
       test('it should render Bills page', async () => {
         await waitFor(() => screen.getByText("Mes notes de frais"))
         expect(screen.getByText("Mes notes de frais")).toBeTruthy()
-      })
-      test.only('test ahah', async () => {
-        jest.clearAllMocks()
-        window.onNavigate(ROUTES_PATH.NewBill)
-        const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
-        expect(1).toBe(2)
-
-      })
-    })
-    describe('when i call create function', () => {
-      test('it should return correct value', async () => {
-        mockStore.bills().create().then(value => {
-          expect(value.fileUrl).toBe('https://localhost:3456/images/test.jpg')
-          expect(value.key).toBe('1234')
-        })
-      })
-    })
-    describe('when i call update function', () => {
-      test('it should return correct value', async () => {
-        const expectedData = {
-          "id": "47qAXb6fIm2zOKkLzMro",
-          "vat": "80",
-          "fileUrl": "https://firebasestorage.googleapis.com/v0/b/billable-677b6.a…f-1.jpg?alt=media&token=c1640e12-a24b-4b11-ae52-529112e9602a",
-          "status": "pending",
-          "type": "Hôtel et logement",
-          "commentary": "séminaire billed",
-          "name": "encore",
-          "fileName": "preview-facture-free-201801-pdf-1.jpg",
-          "date": "2004-04-04",
-          "amount": 400,
-          "commentAdmin": "ok",
-          "email": "a@a",
-          "pct": 20
-        }
-        mockStore.bills().update().then(value => {
-          expect(value.id).toBe(expectedData.id)
-          expect(value.name).toBe(expectedData.name)
-        })
       })
     })
 
@@ -294,20 +248,39 @@ describe("Given I am a user connected as employee", () => {
 
         mockStore.bills.mockImplementationOnce(() => {
           return {
-            create : () =>  {
+            update : () =>  {
               return Promise.reject(new Error("Erreur 404"))
             }
           }})
-        document.body.innerHTML = (ROUTES({ pathname: ROUTES_PATH['Bills'], error: "Erreur 404"}))
+        document.body.innerHTML = NewBillUI()
+        const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
+        const date = screen.getByTestId('datepicker')
+        const amount = screen.getByTestId('amount')
+        const pct = screen.getByTestId('pct')
+        const file = screen.getByTestId('file')
+        const submitButton = document.querySelector('#btn-send-bill')
+        const newFile = new File(['image.jpg'], 'une-image.jpg' , { type: "image/jpeg"})
+        const spyUpdate = jest.spyOn(mockStore.bills(), 'update')
+
+        fireEvent.change(date, {target: {value:'Salade'}})
+        fireEvent.change(amount, {target: {value:'Tomate'}})
+        fireEvent.change(pct, {target: {value:'Oignons'}})
+
+        file.addEventListener('change', billNew.handleChangeFile)
+        userEvent.upload(file , newFile)
         await new Promise(process.nextTick);
-        const message = await screen.getByText(/Erreur 404/)
-        expect(message).toBeTruthy()
+
+        submitButton.addEventListener('click', billNew.handleSubmit)
+        userEvent.click(submitButton)
+        await new Promise(process.nextTick);
+
+        expect(spyUpdate).rejects.toEqual(new Error("Erreur 404"))
       })
       test("fetches bills from an API and fails with 500 message error", async () => {
 
         mockStore.bills.mockImplementationOnce(() => {
           return {
-            create : () =>  {
+            update : () =>  {
               return Promise.reject(new Error("Erreur 500"))
             }
           }})
