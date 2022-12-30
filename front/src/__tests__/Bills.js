@@ -6,11 +6,9 @@ import '@testing-library/jest-dom'
 import {fireEvent, getByAltText, getByTestId, screen, waitFor} from "@testing-library/dom"
 import BillsUI from "../views/BillsUI.js"
 import { bills } from "../fixtures/bills.js"
-import Bills from '../containers/Bills'
 import { ROUTES_PATH} from "../constants/routes.js";
 import {localStorageMock} from "../__mocks__/localStorage.js";
 import mockStore from "../__mocks__/store"
-import userEvent from '@testing-library/user-event'
 
 import router from "../app/Router.js";
 
@@ -76,30 +74,6 @@ describe("Given I am connected as an employee", () => {
       expect(modalFile).toHaveClass('show')
       //est-ce la bonne image ?
       expect(modalSrc).toBe(url)
-      
-
-      //on créé une instance de Bills et on lui ajoute l'évenement avec mock
-      // const modalFile = document.getElementById('modaleFile')
-      // const store = null;
-      // $.fn.modal = jest.fn(() => modalFile.classList.add('show'))
-      // const newBills = new Bills({
-      //   document,
-      //   onNavigate,
-      //   store,
-      //   localStorage: window.localStorage
-      // });
-      // const eyeButton = screen.getAllByTestId('icon-eye')[0]
-      
-      // const handleClick = jest.fn(newBills.handleClickIconEye(eyeButton));
-      // eyeButton.addEventListener("click", handleClick);
-      // fireEvent.click(eyeButton);
-      
-      // const url = eyeButton.dataset.billUrl;
-      // const modalSrc = screen.getByAltText('Bill').src.replace('%E2%80%A6','…');
-
-      // expect(handleClick).toHaveBeenCalled();
-      // expect(modaleFile).toHaveClass("show")
-      // expect(modalSrc).toBe(url)
       
     })
 })

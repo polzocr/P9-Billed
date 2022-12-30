@@ -10,16 +10,12 @@ import mockStore from "../__mocks__/store"
 import {localStorageMock} from "../__mocks__/localStorage.js";
 import { ROUTES_PATH, ROUTES} from "../constants/routes.js";
 import router from "../app/Router"
-import { bills } from "../fixtures/bills.js"
-import Bills from '../containers/Bills'
 import userEvent from '@testing-library/user-event'
-import { TestScheduler } from 'jest'
-import BillsUI from '../views/BillsUI.js'
 
-
+//mocking
 jest.mock("../app/store", () => mockStore)
 
-
+//initialisation
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 window.localStorage.setItem('user', JSON.stringify({
   type: 'Employee',
@@ -29,109 +25,39 @@ const root = document.createElement("div")
 root.setAttribute("id", "root")
 document.body.append(root)
 router()
-// const onNavigate = (pathname) => {
-//   document.body.innerHTML = ROUTES({ pathname });
-// };
 window.onNavigate(ROUTES_PATH.NewBill)
 
 describe("Given I am a user connected as employee", () => {
   describe("When i'm on new bill page", () => {
-    //est-on bien sur la page new bill ?
+    //are we on new bill page?
     test('Then new Bill page should be displayed', async () => {
       await waitFor(() => screen.getByText("Envoyer une note de frais"))
       expect(screen.getByText("Envoyer une note de frais")).toBeTruthy()
       expect(screen.getByTestId("file")).toBeTruthy()      
-    })
-
-    describe('when i try to submit the form', () => {     
-      //test validité des champs
-      test('then inputs should be valid', async () => {
-        
-        jest.clearAllMocks()
-
-        const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
-        const date = screen.getByTestId('datepicker')
-        const amount = screen.getByTestId('amount')
-        const pct = screen.getByTestId('pct')
-        const formSubmit = screen.getByTestId('form-new-bill')
-        const handleSubmit = jest.fn(() => billNew.handleSubmit)
-        const submitButton = document.querySelector('#btn-send-bill')
-
-        fireEvent.change(date, {target: {value:'2025-01-01'}})
-        fireEvent.change(amount, {target: {value:'220'}})
-        fireEvent.change(pct, {target: {value:'10'}})
-        
-        
-        submitButton.addEventListener('click', handleSubmit)
-        userEvent.click(submitButton)
-        
-        expect(handleSubmit).toHaveBeenCalled()
-        expect(date.validity.valid).toBeTruthy()
-        expect(amount.validity.valid).toBeTruthy()
-        expect(pct.validity.valid).toBeTruthy()
-      })
-      //test validité des champs avec des champs vides et des champs incorrects
-      test('then inputs should not be valid', async () => {
-        document.body.innerHTML = NewBillUI()
-        jest.clearAllMocks()
-
-        const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
-        const date = screen.getByTestId('datepicker')
-        const amount = screen.getByTestId('amount')
-        const pct = screen.getByTestId('pct')
-        const formSubmit = screen.getByTestId('form-new-bill')
-        const handleSubmit = jest.fn(() => billNew.handleSubmit)
-        const submitButton = document.querySelector('#btn-send-bill')
-
-        fireEvent.change(date, {target: {value:'Salade'}})
-        fireEvent.change(amount, {target: {value:'Tomate'}})
-        fireEvent.change(pct, {target: {value:'Oignons'}})
-        
-        
-        submitButton.addEventListener('click', handleSubmit)
-        userEvent.click(submitButton)
-        await new Promise(process.nextTick);
-        
-        
-        expect(date.validity.valid).not.toBeTruthy()
-        expect(amount.validity.valid).not.toBeTruthy()
-        expect(pct.validity.valid).not.toBeTruthy()
-
-        fireEvent.change(date, {target: {value:''}})
-        fireEvent.change(amount, {target: {value:''}})
-        fireEvent.change(pct, {target: {value:''}})
-
-        userEvent.click(submitButton)
-        await new Promise(process.nextTick);
-
-        
-        expect(handleSubmit.mock.calls.length).toEqual(2)
-        expect(date.validity.valid).not.toBeTruthy()
-        expect(amount.validity.valid).not.toBeTruthy()
-        expect(pct.validity.valid).not.toBeTruthy()
-      })
-    })
-    
+    })   
     
     describe('when i try to change the file', () => {
-      //peut-on rentrer un fichier avec un format incorrect ?
+      //can we input incorrect file ?
       test('Then input a file with incorrect format should remove the file', async () => {
+        //create the view and the instance of NewBill
         document.body.innerHTML = NewBillUI()
         const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
         const fileInput = screen.getByTestId('file')
         const newFile = new File(['image.pdf'], 'une-image.pdf' , { type: "image/pdf"})
 
-        
+        //spying the alert box and create function
         const alerting = jest.spyOn(window, "alert").mockImplementation(() => {});
         const spyCreate = jest.spyOn(mockStore.bills(), 'create')
         
-
+        //adding event
         fileInput.addEventListener('change', billNew.handleChangeFile )
         userEvent.upload(fileInput , newFile)
         await new Promise(process.nextTick);
 
         
         expect(alerting).toBeCalledWith("Le type de fichier saisi n'est pas correct")
+
+        //wrong file type does not call create method
         expect(billNew.goodFileType).toEqual(false)
         expect(billNew.fileUrl).toBeNull()
         expect(billNew.billId).toBeNull()
@@ -158,18 +84,19 @@ describe("Given I am a user connected as employee", () => {
 
         
         expect(alerting).not.toBeCalledWith("Le type de fichier saisi n'est pas correct")
-        expect(spyCreate).toHaveBeenCalled()
         expect(spyUpdate).not.toHaveBeenCalled()
+        expect(spyCreate).toHaveBeenCalled()
 
+        //responses of create method
         expect(billNew.fileUrl).toEqual('https://localhost:3456/images/test.jpg')
         expect(billNew.billId).toEqual('1234')
         expect(billNew.fileName).toEqual('une-image.jpg')
 
+        //keeping the file
         expect(billNew.goodFileType).toBeTruthy()
         expect(fileInput.files).not.toBeNull()
         expect(fileInput.files[0]).toStrictEqual(newFile)
       })
-      
     })
 
     describe('when i submit form with good value', () => {
@@ -177,6 +104,7 @@ describe("Given I am a user connected as employee", () => {
         jest.clearAllMocks()
         document.body.innerHTML = NewBillUI()
 
+        //creating onNavigate for redirecting after update method
         const onNavigate = (pathname) => {
           document.body.innerHTML = ROUTES({ pathname })
         }
@@ -197,6 +125,7 @@ describe("Given I am a user connected as employee", () => {
         const spyCreate = jest.spyOn(mockStore.bills(), 'create')
 
         
+        //filing form
         fireEvent.change(commentary, {target: {value:'Voila un long et important commentaire'}})
         fireEvent.change(name, {target: {value:'Tres grosse dépense'}})
         fireEvent.change(vat, {target: {value:'200'}})
@@ -218,6 +147,7 @@ describe("Given I am a user connected as employee", () => {
         expect(billNew.fileUrl).toEqual('https://localhost:3456/images/test.jpg')
         expect(billNew.billId).toEqual('1234')
         
+        //update method call with good values ?
         expect(spyUpdate).toHaveBeenCalled()
         expect(spyUpdate).toBeCalledWith({"data": "{\"email\":\"employee@test.tld\",\"type\":\"Transports\",\"name\":\"Tres grosse dépense\",\"amount\":220,\"date\":\"2021-01-01\",\"vat\":\"200\",\"pct\":10,\"commentary\":\"Voila un long et important commentaire\",\"fileUrl\":\"https://localhost:3456/images/test.jpg\",\"fileName\":\"une-image.jpg\",\"status\":\"pending\"}", "selector": "1234"})
       })
@@ -244,7 +174,7 @@ describe("Given I am a user connected as employee", () => {
         router()
         window.onNavigate(ROUTES_PATH.NewBill)
       })
-      test("fetches bills from an API and fails with 404 message error", async () => {
+      test("submit form and fails with 404 message error", async () => {
 
         mockStore.bills.mockImplementationOnce(() => {
           return {
@@ -284,10 +214,29 @@ describe("Given I am a user connected as employee", () => {
               return Promise.reject(new Error("Erreur 500"))
             }
           }})
-        document.body.innerHTML = (ROUTES({ pathname: ROUTES_PATH['Bills'], error: "Erreur 500"}))
+        document.body.innerHTML = NewBillUI()
+        const billNew = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
+        const date = screen.getByTestId('datepicker')
+        const amount = screen.getByTestId('amount')
+        const pct = screen.getByTestId('pct')
+        const file = screen.getByTestId('file')
+        const submitButton = document.querySelector('#btn-send-bill')
+        const newFile = new File(['image.jpg'], 'une-image.jpg' , { type: "image/jpeg"})
+        const spyUpdate = jest.spyOn(mockStore.bills(), 'update')
+
+        fireEvent.change(date, {target: {value:'Salade'}})
+        fireEvent.change(amount, {target: {value:'Tomate'}})
+        fireEvent.change(pct, {target: {value:'Oignons'}})
+
+        file.addEventListener('change', billNew.handleChangeFile)
+        userEvent.upload(file , newFile)
         await new Promise(process.nextTick);
-        const message = await screen.getByText(/Erreur 500/)
-        expect(message).toBeTruthy()
+
+        submitButton.addEventListener('click', billNew.handleSubmit)
+        userEvent.click(submitButton)
+        await new Promise(process.nextTick);
+
+        expect(spyUpdate).rejects.toEqual(new Error("Erreur 500"))
       })
   })
     

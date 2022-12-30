@@ -1,6 +1,5 @@
 import { ROUTES_PATH } from '../constants/routes.js'
 import Logout from "./Logout.js"
-//import mockStore from "../__mocks__/store"
 
 export default class NewBill {
   constructor({ document, onNavigate, store, localStorage }) {
@@ -40,18 +39,6 @@ export default class NewBill {
     const email = JSON.parse(localStorage.getItem("user")).email
     formData.append('file', file)
     formData.append('email', email)
-    // if (typeof jest !== 'undefined') {
-    //     this.store
-    //     .bills()
-    //     .create(this)
-    //     .then(({fileUrl, key}) => {
-    //       console.log('CREATE MOCK')
-    //       console.log(fileUrl)
-    //       this.billId = key
-    //       this.fileUrl = fileUrl
-    //       this.fileName = fileName
-    //     }).catch(error => console.error(error))
-    // } else {
       this.store
       .bills()
       .create({
@@ -67,7 +54,6 @@ export default class NewBill {
         this.fileUrl = fileUrl
         this.fileName = fileName
       }).catch(error => console.error(error))
-    // }
   }
   handleSubmit = e => {
     e.preventDefault()
@@ -92,17 +78,6 @@ export default class NewBill {
 
   // not need to cover this function by tests
   updateBill = (bill) => {
-    
-      // if (typeof jest !== 'undefined') {
-      //   this.store
-      //   .bills()
-      //   .update(this)
-      //   .then(() => {
-      //     console.log('UPDATE MOCK')
-      //     this.onNavigate(ROUTES_PATH['Bills'])
-      //   })
-      //   .catch(error => console.error(error))
-      // } else {
         if (this.store) {
           this.store
           .bills()
@@ -113,6 +88,5 @@ export default class NewBill {
           })
           .catch(error => console.error(error))
         }
-    // }
   }
 }
