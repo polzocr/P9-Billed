@@ -13,7 +13,7 @@ import router from "../app/Router"
 import userEvent from '@testing-library/user-event'
 
 //mocking
-jest.mock("../app/store", () => mockStore)
+// jest.mock("../app/store", () => mockStore)
 
 //initialisation
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
